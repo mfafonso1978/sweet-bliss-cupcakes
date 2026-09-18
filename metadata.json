@@ -1,0 +1,6 @@
+{
+  "name": "Sweet Bliss Cupcakes - Confeitaria Artesanal & Delivery",
+  "description": "Loja online de cupcakes gourmet artesanais com catálogo interativo de sabores e alérgenos, carrinho em tempo real, checkout dinâmico PIX e rastreamento de pedidos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
