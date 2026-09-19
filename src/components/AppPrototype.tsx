@@ -150,15 +150,16 @@ export const AppPrototype: React.FC<Props> = ({
                   referrerPolicy="no-referrer"
                   className="w-full h-72 object-cover"
                 />
-                <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 text-white">
+                <div className="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-stone-950/75 backdrop-blur-md border border-white/20 text-white shadow-xl">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-rose-300">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500/30 text-rose-200 border border-rose-400/40 mb-1">
+                        <Sparkles className="w-2.5 h-2.5 text-rose-300" />
                         O Queridinho
                       </span>
-                      <h4 className="font-bold text-sm">Red Velvet Especial</h4>
+                      <h4 className="font-bold text-sm text-white">Red Velvet Especial</h4>
                     </div>
-                    <span className="text-xs font-extrabold bg-rose-600 px-2.5 py-1 rounded-lg">
+                    <span className="text-xs font-extrabold bg-rose-600 text-white px-2.5 py-1 rounded-lg shadow-sm">
                       R$ 14,50
                     </span>
                   </div>
