@@ -93,6 +93,9 @@ export default function App() {
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [addedAnimationId, setAddedAnimationId] = useState<string | null>(null);
+  const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register'>('login');
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
+  const [pendingAddToCart, setPendingAddToCart] = useState<{ cupcake: Cupcake; quantity: number } | null>(null);
 
   // Admin Area Handlers
   const handleOpenAdminArea = () => {
@@ -117,9 +120,12 @@ export default function App() {
   // User Profile & Authentication Handlers
   const handleLogout = () => {
     setCurrentUser(null);
+    setCart([]);
     setIsProfileOpen(false);
     setIsOrdersOpen(false);
     setActiveOrderForStatus(null);
+    setPendingAddToCart(null);
+    setAuthNotice(null);
   };
 
   const handleUpdateProfile = (updatedUser: User) => {
@@ -171,6 +177,15 @@ export default function App() {
   const handleAddToCart = (cupcake: Cupcake, quantity: number = 1) => {
     if (cupcake.stock <= 0) return;
 
+    // RULE: Cannot add items to cart without being logged in
+    if (!currentUser) {
+      setPendingAddToCart({ cupcake, quantity });
+      setAuthNotice('Para adicionar produtos ao carrinho e fazer seu pedido, entre na sua conta ou crie um cadastro gratuito!');
+      setAuthInitialMode('login');
+      setIsAuthOpen(true);
+      return;
+    }
+
     setCart((prev) => {
       const existingIdx = prev.findIndex((i) => i.cupcake.id === cupcake.id);
       if (existingIdx >= 0) {
@@ -185,6 +200,40 @@ export default function App() {
 
     setAddedAnimationId(cupcake.id);
     setTimeout(() => setAddedAnimationId(null), 1200);
+  };
+
+  const handleLoginSuccess = (user: User) => {
+    setCurrentUser(user);
+    setAuthNotice(null);
+
+    // If an item addition was pending prior to login/registration, add it now
+    if (pendingAddToCart) {
+      const { cupcake, quantity } = pendingAddToCart;
+      setCart((prev) => {
+        const existingIdx = prev.findIndex((i) => i.cupcake.id === cupcake.id);
+        if (existingIdx >= 0) {
+          const updated = [...prev];
+          const newQty = Math.min(cupcake.stock, updated[existingIdx].quantity + quantity);
+          updated[existingIdx] = { ...updated[existingIdx], quantity: newQty };
+          return updated;
+        } else {
+          return [...prev, { cupcake, quantity: Math.min(cupcake.stock, quantity) }];
+        }
+      });
+      setAddedAnimationId(cupcake.id);
+      setTimeout(() => setAddedAnimationId(null), 1200);
+      setPendingAddToCart(null);
+    }
+  };
+
+  const handleOpenCart = () => {
+    if (!currentUser) {
+      setAuthNotice('Entre na sua conta ou cadastre-se para acessar e gerenciar seu carrinho de compras.');
+      setAuthInitialMode('login');
+      setIsAuthOpen(true);
+      return;
+    }
+    setIsCartOpen(true);
   };
 
   const handleUpdateQuantity = (cupcakeId: string, delta: number) => {
@@ -296,11 +345,16 @@ export default function App() {
       {/* Header */}
       <Header
         cartCount={totalCartCount}
-        onOpenCart={() => setIsCartOpen(true)}
+        onOpenCart={handleOpenCart}
         onOpenActiveOrder={() => activeOrder && setActiveOrderForStatus(activeOrder)}
         hasActiveOrder={Boolean(activeOrder)}
         currentUser={currentUser}
-        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenAuth={() => {
+          setAuthNotice(null);
+          setPendingAddToCart(null);
+          setAuthInitialMode('login');
+          setIsAuthOpen(true);
+        }}
         onOpenProfile={() => setIsProfileOpen(true)}
         onLogout={handleLogout}
         onOpenOrders={() => setIsOrdersOpen(true)}
@@ -316,7 +370,7 @@ export default function App() {
           onSelectCupcake={(cup) => setSelectedCupcake(cup)}
           onAddToCart={(cup) => handleAddToCart(cup, 1)}
           addedCupcakeId={addedAnimationId}
-          onOpenCart={() => setIsCartOpen(true)}
+          onOpenCart={handleOpenCart}
           cartCount={totalCartCount}
         />
       </main>
@@ -511,8 +565,14 @@ export default function App() {
       {isAuthOpen && (
         <AuthModal
           isOpen={isAuthOpen}
-          onClose={() => setIsAuthOpen(false)}
-          onLoginSuccess={(user) => setCurrentUser(user)}
+          onClose={() => {
+            setIsAuthOpen(false);
+            setAuthNotice(null);
+            setPendingAddToCart(null);
+          }}
+          onLoginSuccess={handleLoginSuccess}
+          initialMode={authInitialMode}
+          notice={authNotice}
         />
       )}
 
