@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { CartItem, Order, PaymentMethod, User } from '../types';
+import { CartItem, Order, PaymentMethod, User, Coupon } from '../models/types';
+import { OrderController } from '../controllers/OrderController';
+import { CartController } from '../controllers/CartController';
+import { OrderValidator } from '../models/validators';
 import { 
   X, 
   MapPin, 
@@ -71,7 +74,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   // Coupon
   const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountPercent?: number; freeDelivery?: boolean } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponMessage, setCouponMessage] = useState<string | null>(null);
 
   // Payment Method selection
@@ -106,20 +109,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
   }, [currentUser]);
 
-  // Subtotal & Calculations
-  const subtotal = items.reduce((acc, item) => {
-    const price = item.cupcake.promoPrice || item.cupcake.price;
-    return acc + price * item.quantity;
-  }, 0);
-
-  const baseDeliveryFee = isPickup ? 0 : 7.90;
-  const deliveryFee = appliedCoupon?.freeDelivery ? 0 : baseDeliveryFee;
-
-  let discount = 0;
-  if (appliedCoupon?.discountPercent) {
-    discount = (subtotal * appliedCoupon.discountPercent) / 100;
-  }
-  const total = Math.max(0, subtotal + deliveryFee - discount);
+  // Subtotal & Calculations delegadas ao CartController (MVC)
+  const {
+    subtotal,
+    deliveryFee,
+    discount,
+    total
+  } = CartController.calculateTotals(items, appliedCoupon, isPickup);
 
   // Calculate change for cash
   const numCashGiven = parseFloat(cashAmountGiven.replace(',', '.')) || total;
@@ -193,18 +189,26 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   // Coupon handling
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = (e: React.FormEvent) => {
+    e.preventDefault();
     const clean = couponInput.trim().toUpperCase();
-    if (clean === 'FRETEGRATIS') {
-      setAppliedCoupon({ code: 'FRETEGRATIS', freeDelivery: true });
+    if (!clean) return;
+
+    const result = CartController.validateCoupon(clean, subtotal);
+    if (result.isValid && result.coupon) {
+      setAppliedCoupon(result.coupon);
+      setCouponMessage(result.message || 'Cupom aplicado com sucesso!');
+      setCouponInput('');
+    } else if (clean === 'FRETEGRATIS') {
+      setAppliedCoupon({ code: clean, freeDelivery: true, description: 'Frete Grátis' });
       setCouponMessage('Cupom FRETEGRATIS aplicado! Entrega gratuita garantida.');
       setCouponInput('');
     } else if (clean === 'CUPOM10' || clean === 'CUPCAKE10') {
-      setAppliedCoupon({ code: clean, discountPercent: 10 });
+      setAppliedCoupon({ code: clean, discountPercent: 10, description: '10% de desconto' });
       setCouponMessage('Cupom de 10% de desconto aplicado com sucesso!');
       setCouponInput('');
     } else {
-      setCouponMessage('Cupom não encontrado. Experimente FRETEGRATIS ou CUPOM10.');
+      setCouponMessage('Cupom não encontrado. Experimente PRIMEIRACOMPRA, FRETEGRATIS ou SWEET15.');
     }
   };
 
@@ -318,14 +322,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setTimeout(() => {
       setIsProcessing(false);
 
-      const newOrder: Order = {
-        id: `PED-${Math.floor(100000 + Math.random() * 900000)}`,
-        userId: currentUser?.id,
-        createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        items: [...items],
+      // Criação e persistência de pedido delegada ao OrderController (MVC)
+      const createResult = OrderController.createOrder({
+        items,
         subtotal,
-        discount,
         deliveryFee,
+        discount,
         total,
         couponCode: appliedCoupon?.code,
         customerName: customerName.trim() || currentUser?.name,
@@ -343,14 +345,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           isPickup
         },
         paymentMethod: method,
-        paymentStatus: 'Aprovado',
-        status: 'Em Produção',
-        estimatedMinutes: isPickup ? 20 : 35
-      };
+        currentUser
+      });
 
-      setCreatedOrder(newOrder);
-      setStep('success');
-      onOrderCreated(newOrder);
+      if (createResult.success && createResult.order) {
+        setCreatedOrder(createResult.order);
+        setStep('success');
+        onOrderCreated(createResult.order);
+      } else {
+        setValidationError(createResult.error || 'Erro ao processar pedido.');
+      }
     }, 1200);
   };
 

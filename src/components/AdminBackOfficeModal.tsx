@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cupcake, Order, OrderStatus, CupcakeCategory } from '../types';
+import { Cupcake, Order, OrderStatus, CupcakeCategory } from '../models/types';
 import { 
   X, 
   Settings, 

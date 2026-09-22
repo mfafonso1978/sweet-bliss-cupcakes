@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Cupcake, CupcakeCategory } from '../types';
+import { Cupcake, CupcakeCategory } from '../models/types';
+import { CatalogController } from '../controllers/CatalogController';
 import { CupcakeCard } from './CupcakeCard';
 import { 
   Search, 
@@ -55,19 +56,13 @@ export const AppPrototype: React.FC<Props> = ({
     }
   };
 
-  const filteredCupcakes = cupcakes.filter((c) => {
-    const matchesCat = selectedCategory === 'Todas' || c.category === selectedCategory;
-
-    const matchesSearch = 
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.ingredients.some(i => i.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      c.allergens.some(a => a.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    const matchesAllergen = allergenFilter ? !c.allergens.includes(allergenFilter as any) : true;
-
-    return matchesCat && matchesSearch && matchesAllergen;
-  });
+  // Filtragem delegada ao CatalogController (MVC)
+  const filteredCupcakes = CatalogController.filterCatalog(
+    cupcakes,
+    selectedCategory,
+    searchTerm,
+    allergenFilter
+  );
 
   return (
     <div className="space-y-10 pb-16">

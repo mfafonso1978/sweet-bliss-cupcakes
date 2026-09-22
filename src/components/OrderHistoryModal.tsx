@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Order, User } from '../types';
+import { Order, User } from '../models/types';
 import { 
   X, 
   Star, 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cupcake } from '../types';
+import { Cupcake } from '../models/types';
 import { 
   X, 
   Plus, 

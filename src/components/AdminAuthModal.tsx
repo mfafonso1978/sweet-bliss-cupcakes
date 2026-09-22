@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AuthController } from '../controllers/AuthController';
 import { 
   X, 
   ShieldCheck, 
@@ -35,15 +36,12 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     e.preventDefault();
     setError(null);
 
-    const cleanUser = username.trim().toLowerCase();
-    const cleanPass = password.trim();
-
-    if (!cleanUser) {
+    if (!username.trim()) {
       setError('Por favor, informe o login ou e-mail de administrador.');
       return;
     }
 
-    if (!cleanPass) {
+    if (!password.trim()) {
       setError('Por favor, digite sua senha de acesso.');
       return;
     }
@@ -51,21 +49,16 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
     setIsLoading(true);
 
     setTimeout(() => {
-      // Valid administrator credentials:
-      // username: "admin" or "admin@sweetbliss.com.br"
-      // password: "admin123" or stored in localStorage
-      const validUsers = ['admin', 'admin@sweetbliss.com.br', 'gerente'];
-      const defaultPass = 'admin123';
-      const storedPass = localStorage.getItem('sweetbliss_admin_password') || defaultPass;
+      // Autenticação delegada ao AuthController (MVC)
+      const authResult = AuthController.loginAdmin(username, password);
+      setIsLoading(false);
 
-      if (validUsers.includes(cleanUser) && (cleanPass === storedPass || cleanPass === defaultPass)) {
-        setIsLoading(false);
+      if (authResult.success) {
         onLoginSuccess();
       } else {
-        setIsLoading(false);
-        setError('Login ou senha incorretos. Verifique suas credenciais de administrador.');
+        setError(authResult.error || 'Login ou senha incorretos.');
       }
-    }, 500);
+    }, 400);
   };
 
   const handleFillDemo = () => {

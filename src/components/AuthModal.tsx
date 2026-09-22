@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User } from '../types';
-import { INITIAL_REGISTERED_USERS, RegisteredUser } from '../data/initialUsers';
+import { User } from '../models/types';
+import { AuthController } from '../controllers/AuthController';
+import { AuthValidator } from '../models/validators';
 import { 
   X, 
   Mail, 
@@ -42,11 +43,10 @@ export const AuthModal: React.FC<Props> = ({
 
   const [error, setError] = useState<string | null>(null);
   const [notRegisteredEmail, setNotRegisteredEmail] = useState<string | null>(null);
-  const [attempts, setAttempts] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Sync mode with initialMode prop when modal opens
+  // Sincroniza o modo inicial ao abrir a modal (View)
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
@@ -56,146 +56,67 @@ export const AuthModal: React.FC<Props> = ({
     }
   }, [isOpen, initialMode]);
 
-  // Validate password rule: min 6 chars
-  const isPasswordValid = (pwd: string) => {
-    return pwd.length >= 6;
-  };
-
-  // Format phone (00) 00000-0000
+  // Formatação de telefone via validador da camada Model
   const handlePhoneChange = (val: string) => {
-    const digits = val.replace(/\D/g, '').slice(0, 11);
-    let formatted = digits;
-    if (digits.length > 2) {
-      formatted = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    }
-    if (digits.length > 7) {
-      formatted = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-    }
-    setPhone(formatted);
+    setPhone(AuthValidator.formatPhone(val));
   };
 
-  // Get registered users list from localStorage or initialize with demo seed
-  const getRegisteredUsers = (): RegisteredUser[] => {
-    try {
-      const stored = localStorage.getItem('cupcake_registered_users');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      }
-      // Seed default demo user if empty
-      localStorage.setItem('cupcake_registered_users', JSON.stringify(INITIAL_REGISTERED_USERS));
-      return INITIAL_REGISTERED_USERS;
-    } catch {
-      return INITIAL_REGISTERED_USERS;
-    }
-  };
-
+  // Submissão delegada ao AuthController (MVC)
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setNotRegisteredEmail(null);
 
-    if (isBlocked) {
-      setError('Conta temporariamente bloqueada por segurança após múltiplas tentativas incorretas.');
-      return;
-    }
+    const result = AuthController.login(email, password);
 
-    if (!email.trim() || !password.trim()) {
-      setError('Por favor, preencha o e-mail e a senha cadastrados.');
-      return;
-    }
-
-    const savedUsers = getRegisteredUsers();
-    const existingUser = savedUsers.find(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase()
-    );
-
-    // RULE: If user is not registered, do NOT allow login directly!
-    if (!existingUser) {
-      setNotRegisteredEmail(email.trim());
-      setError('Cadastro não encontrado para este e-mail. É obrigatório ter uma conta registrada para entrar.');
-      return;
-    }
-
-    // Validate password
-    if (existingUser.password && existingUser.password !== password) {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      if (newAttempts >= 5) {
+    if (!result.success) {
+      if (result.isBlocked) {
         setIsBlocked(true);
-        setError('Conta bloqueada temporariamente após 5 tentativas incorretas.');
-      } else {
-        setError(`Senha incorreta. Verifique seus dados e tente novamente (tentativa ${newAttempts} de 5).`);
       }
+      if (result.notRegistered) {
+        setNotRegisteredEmail(email.trim());
+      }
+      setError(result.error || 'Erro ao realizar login.');
       return;
     }
 
-    // Password rule check for legacy accounts without password
-    if (!isPasswordValid(password)) {
-      setError('A senha deve conter no mínimo 6 caracteres.');
-      return;
+    if (result.user) {
+      setSuccessMsg(`Bem-vindo(a) de volta, ${result.user.name}!`);
+      const authenticatedUser = result.user;
+      setTimeout(() => {
+        onLoginSuccess(authenticatedUser);
+        onClose();
+      }, 600);
     }
-
-    // Login success
-    setSuccessMsg(`Bem-vindo(a) de volta, ${existingUser.name}!`);
-    setTimeout(() => {
-      onLoginSuccess(existingUser);
-      onClose();
-    }, 600);
   };
 
+  // Registro delegado ao AuthController (MVC)
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setNotRegisteredEmail(null);
 
-    if (!name.trim()) {
-      setError('Por favor, informe seu nome completo.');
+    const result = AuthController.register({
+      name,
+      email,
+      password,
+      phone,
+      birthDate
+    });
+
+    if (!result.success) {
+      setError(result.error || 'Erro ao cadastrar usuário.');
       return;
     }
 
-    if (!email.trim() || !email.includes('@') || !email.includes('.')) {
-      setError('Por favor, informe um endereço de e-mail válido.');
-      return;
+    if (result.user) {
+      setSuccessMsg('Cadastro realizado com sucesso! Entrando na sua conta...');
+      const registeredUser = result.user;
+      setTimeout(() => {
+        onLoginSuccess(registeredUser);
+        onClose();
+      }, 700);
     }
-
-    if (!isPasswordValid(password)) {
-      setError('A senha deve ter no mínimo 6 caracteres.');
-      return;
-    }
-
-    const users = getRegisteredUsers();
-    const emailExists = users.some(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase()
-    );
-
-    if (emailExists) {
-      setError('Já existe uma conta cadastrada com este e-mail. Utilize a aba "Já sou Cliente" para entrar.');
-      return;
-    }
-
-    const newUser: RegisteredUser = {
-      id: `usr-${Date.now()}`,
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim() || undefined,
-      birthDate: birthDate || undefined,
-      password: password,
-      addresses: []
-    };
-
-    try {
-      const updated = [...users, newUser];
-      localStorage.setItem('cupcake_registered_users', JSON.stringify(updated));
-    } catch {}
-
-    setSuccessMsg('Cadastro realizado com sucesso! Entrando na sua conta...');
-    setTimeout(() => {
-      onLoginSuccess(newUser);
-      onClose();
-    }, 700);
   };
 
   const handleSwitchToRegister = () => {

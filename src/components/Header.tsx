@@ -10,7 +10,7 @@ import {
   LogOut,
   ShieldCheck
 } from 'lucide-react';
-import { User } from '../types';
+import { User } from '../models/types';
 
 interface HeaderProps {
   cartCount: number;

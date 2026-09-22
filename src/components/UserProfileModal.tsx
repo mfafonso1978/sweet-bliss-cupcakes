@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { User } from '../types';
+import { User } from '../models/types';
+import { AuthValidator } from '../models/validators';
 import { 
   X, 
   User as UserIcon, 
@@ -45,17 +46,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Format phone (00) 00000-0000
+  // Formatação de telefone via AuthValidator (Model)
   const handlePhoneChange = (val: string) => {
-    const digits = val.replace(/\D/g, '').slice(0, 11);
-    let formatted = digits;
-    if (digits.length > 2) {
-      formatted = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    }
-    if (digits.length > 7) {
-      formatted = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-    }
-    setPhone(formatted);
+    setPhone(AuthValidator.formatPhone(val));
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -67,7 +60,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       return;
     }
 
-    if (!email.trim() || !email.includes('@')) {
+    if (!AuthValidator.isValidEmail(email)) {
       setError('Por favor, informe um e-mail válido.');
       return;
     }

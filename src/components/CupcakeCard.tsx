@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cupcake } from '../types';
+import { Cupcake } from '../models/types';
 import { 
   Plus, 
   Check, 

@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Cupcake, CartItem, Order, User, OrderStatus } from './types';
-import { initialCupcakes } from './data/initialCupcakes';
+import React, { useState } from 'react';
+import { Cupcake, CartItem, Order, User, OrderStatus } from './models/types';
+import { CartController } from './controllers/CartController';
+import { OrderController } from './controllers/OrderController';
+import { AuthController } from './controllers/AuthController';
+import { CatalogController } from './controllers/CatalogController';
 import { Header } from './components/Header';
 import { AppPrototype } from './components/AppPrototype';
 import { CupcakeDetailModal } from './components/CupcakeDetailModal';
@@ -28,67 +31,25 @@ import {
   ShieldCheck
 } from 'lucide-react';
 
+/**
+ * View Orquestradora Principal (Camada View do Padrão MVC)
+ * Delega o processamento de regras de negócio, persistência e cálculos para os Controllers dedicados.
+ */
 export default function App() {
-  // Cupcakes Catalog state
-  const [cupcakes, setCupcakes] = useState<Cupcake[]>(() => {
-    try {
-      const saved = localStorage.getItem('cupcake_catalog');
-      if (saved) {
-        const parsed: Cupcake[] = JSON.parse(saved);
-        // Heal any outdated or broken image link (including the former 404 URL for Zero Açúcar Doce de Leite)
-        const healed = parsed.map(c => {
-          if (c.image.includes('photo-1535141192574-5d4897c13136') || (c.id === 'cup-07' && (!c.image || c.image.includes('1535141192574')))) {
-            return {
-              ...c,
-              image: 'https://images.unsplash.com/photo-1582293041079-7814c2f12063?auto=format&fit=crop&w=800&q=80'
-            };
-          }
-          return c;
-        });
-        return healed;
-      }
-      return initialCupcakes;
-    } catch {
-      return initialCupcakes;
-    }
-  });
+  // 1. Estados inicializados através da camada Controller
+  const [cupcakes, setCupcakes] = useState<Cupcake[]>(() => CatalogController.getCatalog());
+  const [cart, setCart] = useState<CartItem[]>(() => CartController.getCart());
+  const [orders, setOrders] = useState<Order[]>(() => OrderController.getOrders());
+  const [currentUser, setCurrentUser] = useState<User | null>(() => AuthController.getCurrentUser());
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => AuthController.isAdminAuthenticated());
 
-  // Shopping Cart state
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('cupcake_cart');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // Orders state (starts empty or loads real user orders from localStorage)
-  const [orders, setOrders] = useState<Order[]>(() => {
-    try {
-      const saved = localStorage.getItem('cupcake_orders');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [];
-  });
-
-  // Current User (starts null or loads from localStorage)
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    try {
-      const saved = localStorage.getItem('cupcake_current_user');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return null;
-  });
-
-  // Modals state
+  // 2. Estados de Controle Visual e Modais (IHC - View)
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedCupcake, setSelectedCupcake] = useState<Cupcake | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [activeOrderForStatus, setActiveOrderForStatus] = useState<Order | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -97,7 +58,7 @@ export default function App() {
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [pendingAddToCart, setPendingAddToCart] = useState<{ cupcake: Cupcake; quantity: number } | null>(null);
 
-  // Admin Area Handlers
+  // --- Handlers de Administração (Delegados ao AuthController e CatalogController) ---
   const handleOpenAdminArea = () => {
     if (isAdminAuthenticated) {
       setIsAdminOpen(true);
@@ -113,12 +74,15 @@ export default function App() {
   };
 
   const handleLogoutAdmin = () => {
+    AuthController.logoutAdmin();
     setIsAdminAuthenticated(false);
     setIsAdminOpen(false);
   };
 
-  // User Profile & Authentication Handlers
+  // --- Handlers de Autenticação e Perfil de Usuário (Delegados ao AuthController) ---
   const handleLogout = () => {
+    AuthController.logout();
+    CartController.clearCart();
     setCurrentUser(null);
     setCart([]);
     setIsProfileOpen(false);
@@ -129,101 +93,46 @@ export default function App() {
   };
 
   const handleUpdateProfile = (updatedUser: User) => {
-    setCurrentUser(updatedUser);
-    try {
-      const stored = localStorage.getItem('cupcake_registered_users');
-      if (stored) {
-        const users: User[] = JSON.parse(stored);
-        const idx = users.findIndex(
-          (u) => u.id === updatedUser.id || u.email.toLowerCase() === updatedUser.email.toLowerCase()
-        );
-        if (idx >= 0) {
-          users[idx] = updatedUser;
-          localStorage.setItem('cupcake_registered_users', JSON.stringify(users));
-        }
-      }
-    } catch {}
-  };
-
-  // Sync with LocalStorage
-  useEffect(() => {
-    try {
-      if (currentUser) {
-        localStorage.setItem('cupcake_current_user', JSON.stringify(currentUser));
-      } else {
-        localStorage.removeItem('cupcake_current_user');
-      }
-    } catch {}
-  }, [currentUser]);
-  useEffect(() => {
-    try {
-      localStorage.setItem('cupcake_catalog', JSON.stringify(cupcakes));
-    } catch {}
-  }, [cupcakes]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('cupcake_cart', JSON.stringify(cart));
-    } catch {}
-  }, [cart]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('cupcake_orders', JSON.stringify(orders));
-    } catch {}
-  }, [orders]);
-
-  // Cart Operations
-  const handleAddToCart = (cupcake: Cupcake, quantity: number = 1) => {
-    if (cupcake.stock <= 0) return;
-
-    // RULE: Cannot add items to cart without being logged in
-    if (!currentUser) {
-      setPendingAddToCart({ cupcake, quantity });
-      setAuthNotice('Para adicionar produtos ao carrinho e fazer seu pedido, entre na sua conta ou crie um cadastro gratuito!');
-      setAuthInitialMode('login');
-      setIsAuthOpen(true);
-      return;
+    const result = AuthController.updateProfile(updatedUser);
+    if (result.success && result.user) {
+      setCurrentUser(result.user);
     }
-
-    setCart((prev) => {
-      const existingIdx = prev.findIndex((i) => i.cupcake.id === cupcake.id);
-      if (existingIdx >= 0) {
-        const updated = [...prev];
-        const newQty = Math.min(cupcake.stock, updated[existingIdx].quantity + quantity);
-        updated[existingIdx] = { ...updated[existingIdx], quantity: newQty };
-        return updated;
-      } else {
-        return [...prev, { cupcake, quantity: Math.min(cupcake.stock, quantity) }];
-      }
-    });
-
-    setAddedAnimationId(cupcake.id);
-    setTimeout(() => setAddedAnimationId(null), 1200);
   };
 
   const handleLoginSuccess = (user: User) => {
+    AuthController.setCurrentUser(user);
     setCurrentUser(user);
     setAuthNotice(null);
 
-    // If an item addition was pending prior to login/registration, add it now
+    // Processa adição de item pendente pré-login
     if (pendingAddToCart) {
       const { cupcake, quantity } = pendingAddToCart;
-      setCart((prev) => {
-        const existingIdx = prev.findIndex((i) => i.cupcake.id === cupcake.id);
-        if (existingIdx >= 0) {
-          const updated = [...prev];
-          const newQty = Math.min(cupcake.stock, updated[existingIdx].quantity + quantity);
-          updated[existingIdx] = { ...updated[existingIdx], quantity: newQty };
-          return updated;
-        } else {
-          return [...prev, { cupcake, quantity: Math.min(cupcake.stock, quantity) }];
-        }
-      });
-      setAddedAnimationId(cupcake.id);
-      setTimeout(() => setAddedAnimationId(null), 1200);
+      const res = CartController.addItem(cart, cupcake, quantity, true);
+      if (res.success) {
+        setCart(res.updatedCart);
+        setAddedAnimationId(cupcake.id);
+        setTimeout(() => setAddedAnimationId(null), 1200);
+      }
       setPendingAddToCart(null);
     }
+  };
+
+  // --- Handlers de Carrinho de Compras (Delegados ao CartController) ---
+  const handleAddToCart = (cupcake: Cupcake, quantity: number = 1) => {
+    const result = CartController.addItem(cart, cupcake, quantity, Boolean(currentUser));
+    if (!result.success) {
+      if (result.requiresAuth) {
+        setPendingAddToCart({ cupcake, quantity });
+        setAuthNotice(result.message || 'Identificação necessária.');
+        setAuthInitialMode('login');
+        setIsAuthOpen(true);
+      }
+      return;
+    }
+
+    setCart(result.updatedCart);
+    setAddedAnimationId(cupcake.id);
+    setTimeout(() => setAddedAnimationId(null), 1200);
   };
 
   const handleOpenCart = () => {
@@ -237,28 +146,20 @@ export default function App() {
   };
 
   const handleUpdateQuantity = (cupcakeId: string, delta: number) => {
-    setCart((prev) => {
-      return prev
-        .map((item) => {
-          if (item.cupcake.id === cupcakeId) {
-            const nextQty = item.quantity + delta;
-            return nextQty > 0 ? { ...item, quantity: nextQty } : null;
-          }
-          return item;
-        })
-        .filter(Boolean) as CartItem[];
-    });
+    const updated = CartController.updateQuantity(cart, cupcakeId, delta);
+    setCart(updated);
   };
 
   const handleRemoveFromCart = (cupcakeId: string) => {
-    setCart((prev) => prev.filter((i) => i.cupcake.id !== cupcakeId));
+    const updated = CartController.removeItem(cart, cupcakeId);
+    setCart(updated);
   };
 
   const handleClearCart = () => {
+    CartController.clearCart();
     setCart([]);
   };
 
-  // Quick Order Helper
   const handleQuickOrder = () => {
     if (cart.length === 0) {
       const catalogEl = document.getElementById('catalogo') || document.querySelector('main');
@@ -271,72 +172,74 @@ export default function App() {
     setIsCheckoutOpen(true);
   };
 
-  // Order Operations
+  // --- Handlers de Pedidos (Delegados ao OrderController e CatalogController) ---
   const handleOrderCreated = (newOrder: Order) => {
-    setOrders((prev) => [newOrder, ...prev]);
-    // Deduct stock in catalog
-    setCupcakes((prev) =>
-      prev.map((c) => {
-        const cartIt = newOrder.items.find((it) => it.cupcake.id === c.id);
-        if (cartIt) {
-          return { ...c, stock: Math.max(0, c.stock - cartIt.quantity) };
-        }
-        return c;
-      })
-    );
-    // Clear cart
+    // 1. Atualiza o catálogo com baixa de estoque
+    const updatedCatalog = CatalogController.deductStock(newOrder.items);
+    setCupcakes(updatedCatalog);
+
+    // 2. Limpa o carrinho
+    CartController.clearCart();
     setCart([]);
-    // Immediately open status tracking modal
+
+    // 3. Atualiza estado reativo de pedidos a partir da persistência
+    setOrders(OrderController.getOrders());
+
+    // 4. Abre imediatamente a modal de rastreamento
     setActiveOrderForStatus(newOrder);
   };
 
   const handleUpdateOrderStatus = (orderId: string, nextStatus: OrderStatus) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: nextStatus } : o))
-    );
-    if (activeOrderForStatus && activeOrderForStatus.id === orderId) {
-      setActiveOrderForStatus((prev) => (prev ? { ...prev, status: nextStatus } : null));
+    const result = OrderController.updateOrderStatus(orderId, nextStatus);
+    if (result.success) {
+      setOrders(result.updatedOrders);
+      if (activeOrderForStatus && activeOrderForStatus.id === orderId) {
+        setActiveOrderForStatus(result.updatedOrder || null);
+      }
     }
   };
 
   const handleSaveRating = (orderId: string, rating: number, feedback: string) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, rating, ratingFeedback: feedback } : o))
-    );
-    if (activeOrderForStatus && activeOrderForStatus.id === orderId) {
-      setActiveOrderForStatus((prev) =>
-        prev ? { ...prev, rating, ratingFeedback: feedback } : null
-      );
+    const result = OrderController.saveRating(orderId, rating, feedback);
+    if (result.success) {
+      setOrders(result.updatedOrders);
+      if (activeOrderForStatus && activeOrderForStatus.id === orderId) {
+        setActiveOrderForStatus(result.updatedOrder || null);
+      }
     }
   };
 
-  // Admin Operations
+  // --- Handlers do Catálogo e Administração (Delegados ao CatalogController) ---
   const handleAddCupcake = (cupcake: Cupcake) => {
-    setCupcakes((prev) => [cupcake, ...prev]);
+    const result = CatalogController.addCupcake(cupcake);
+    if (result.success) {
+      setCupcakes(result.cupcakes);
+    }
   };
 
   const handleUpdateCupcake = (updated: Cupcake) => {
-    setCupcakes((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    const result = CatalogController.updateCupcake(updated);
+    if (result.success) {
+      setCupcakes(result.cupcakes);
+    }
   };
 
   const handleDeleteCupcake = (cupcakeId: string) => {
-    setCupcakes((prev) => prev.filter((c) => c.id !== cupcakeId));
+    const updated = CatalogController.deleteCupcake(cupcakeId);
+    setCupcakes(updated);
   };
 
-  // Filter orders that belong exclusively to the currently logged in user
-  const userOrders = currentUser
-    ? orders.filter(
-        (o) =>
-          o.userId === currentUser.id ||
-          Boolean(
-            o.customerEmail &&
-              currentUser.email &&
-              o.customerEmail.trim().toLowerCase() === currentUser.email.trim().toLowerCase()
-          )
-      )
-    : [];
+  const handleResetCatalog = () => {
+    const reset = CatalogController.resetCatalog();
+    setCupcakes(reset);
+    CartController.clearCart();
+    setCart([]);
+  };
 
-  // Active in-progress order for the currently logged-in user
+  // Filtragem de pedidos do usuário atual delegada ao OrderController
+  const userOrders = OrderController.getUserOrders(currentUser);
+
+  // Pedido ativo em andamento para acompanhamento
   const activeOrder = userOrders.find((o) => o.status !== 'Entregue');
   const totalCartCount = cart.reduce((acc, it) => acc + it.quantity, 0);
 
@@ -494,12 +397,7 @@ export default function App() {
               </button>
               <span>•</span>
               <button
-                onClick={() => {
-                  localStorage.removeItem('cupcake_catalog');
-                  localStorage.removeItem('cupcake_cart');
-                  setCupcakes(initialCupcakes);
-                  setCart([]);
-                }}
+                onClick={handleResetCatalog}
                 className="hover:text-rose-400 transition-colors flex items-center gap-1"
                 title="Restaurar cardápio original"
               >

@@ -1,5 +1,6 @@
 import React from 'react';
-import { CartItem } from '../types';
+import { CartItem } from '../models/types';
+import { CartController } from '../controllers/CartController';
 import { 
   X, 
   Trash2, 
@@ -32,14 +33,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const subtotal = items.reduce((acc, item) => {
-    const price = item.cupcake.promoPrice || item.cupcake.price;
-    return acc + price * item.quantity;
-  }, 0);
-
-  const totalItemsCount = items.reduce((acc, item) => acc + item.quantity, 0);
-  const minOrderValue = 20.00;
-  const isBelowMinOrder = subtotal < minOrderValue && items.length > 0;
+  // Cálculos delegados ao CartController (MVC)
+  const { subtotal, totalItemsCount, isBelowMinOrder, minOrderValue } =
+    CartController.calculateTotals(items);
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Order, OrderStatus } from '../types';
+import { Order, OrderStatus } from '../models/types';
 import { 
   X, 
   Clock, 
