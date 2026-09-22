@@ -117,7 +117,7 @@ CREATE TABLE orders (
   complement VARCHAR(100) NULL,
   neighborhood VARCHAR(100) NOT NULL,
   city VARCHAR(100) NOT NULL,
-  state VARCHAR(10) NOT NULL DEFAULT 'SP',
+  state VARCHAR(10) NOT NULL DEFAULT 'MG',
   cep VARCHAR(15) NOT NULL,
   reference VARCHAR(255) NULL,
   -- IHC / Métricas Operacionais
@@ -173,8 +173,8 @@ INSERT INTO allergens (id, name, icon, description) VALUES
 
 -- 4.2 Inserção de Usuários Sementes (Cliente Demo e Administrador)
 INSERT INTO users (id, name, email, password_hash, role, phone, birth_date) VALUES
-('usr-demo-1', 'Maria Silva', 'cliente@sweetbliss.com', '$2y$10$e8w.R21f2uT5O7rGg9vFhOn0V7Yg1N4zI8qD3kW1rM2bV6k9.senha123', 'customer', '(11) 98765-4321', '1995-05-15'),
-('usr-admin-1', 'Administrador Sweet Bliss', 'admin@sweetbliss.com.br', '$2y$10$t5u.B82m1xP4A6qWw8eRhOn1Z8Xh2O5aJ9rE4lX2sN3cW7l0.admin123', 'admin', '(11) 99999-8888', '1988-10-20');
+('usr-demo-1', 'Maria Silva', 'cliente@sweetbliss.com', '$2y$10$e8w.R21f2uT5O7rGg9vFhOn0V7Yg1N4zI8qD3kW1rM2bV6k9.senha123', 'customer', '(31) 98765-4321', '1995-05-15'),
+('usr-admin-1', 'Administrador Sweet Bliss', 'admin@sweetbliss.com.br', '$2y$10$t5u.B82m1xP4A6qWw8eRhOn1Z8Xh2O5aJ9rE4lX2sN3cW7l0.admin123', 'admin', '(31) 99999-8888', '1988-10-20');
 
 -- 4.3 Inserção dos 9 Cupcakes Oficiais da Vitrine
 INSERT INTO cupcakes (id, name, category, price, promo_price, image_url, description, ingredients, in_stock, calories, rating) VALUES
@@ -343,7 +343,7 @@ INSERT INTO orders (
   'PED-592814',
   'usr-demo-1',
   'Maria Silva',
-  '(11) 98765-4321',
+  '(31) 98765-4321',
   'cliente@sweetbliss.com',
   'Entregue',
   'PIX',
@@ -354,13 +354,13 @@ INSERT INTO orders (
   35.80,
   NULL,
   FALSE,
-  'Avenida Paulista',
-  '1000',
+  'Avenida Caio Martins',
+  '500',
   'Apto 42',
-  'Bela Vista',
-  'São Paulo',
-  'SP',
-  '01310-100',
+  'Centro',
+  'Matozinhos',
+  'MG',
+  '35720-000',
   35,
   5,
   'Maravilhosos! Chegaram perfeitos na embalagem térmica e super fresquinhos.'

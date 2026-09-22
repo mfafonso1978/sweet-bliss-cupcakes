@@ -136,19 +136,19 @@ export const INITIAL_REGISTERED_USERS: RegisteredUser[] = [
     id: 'usr-demo-1',
     name: 'Maria Silva',
     email: 'cliente@sweetbliss.com',
-    phone: '(11) 98765-4321',
+    phone: '(31) 98765-4321',
     birthDate: '1995-05-15',
     password: 'senha123',
     role: 'customer',
     addresses: [
       {
-        cep: '01310-100',
-        street: 'Avenida Paulista',
-        number: '1000',
+        cep: '35720-000',
+        street: 'Avenida Caio Martins',
+        number: '500',
         complement: 'Apto 42',
-        neighborhood: 'Bela Vista',
-        city: 'São Paulo',
-        state: 'SP'
+        neighborhood: 'Centro',
+        city: 'Matozinhos',
+        state: 'MG'
       }
     ]
   },
@@ -156,17 +156,17 @@ export const INITIAL_REGISTERED_USERS: RegisteredUser[] = [
     id: 'usr-admin-1',
     name: 'Administrador Sweet Bliss',
     email: 'admin@sweetbliss.com.br',
-    phone: '(11) 99999-8888',
+    phone: '(31) 99999-8888',
     password: 'admin123',
     role: 'admin',
     addresses: [
       {
-        cep: '01310-100',
-        street: 'Avenida Paulista',
-        number: '1000',
-        neighborhood: 'Bela Vista',
-        city: 'São Paulo',
-        state: 'SP'
+        cep: '35720-000',
+        street: 'Avenida Caio Martins',
+        number: '500',
+        neighborhood: 'Centro',
+        city: 'Matozinhos',
+        state: 'MG'
       }
     ]
   }

@@ -334,13 +334,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         customerPhone: customerPhone.trim() || currentUser?.phone,
         customerEmail: customerEmail.trim() || currentUser?.email || undefined,
         address: {
-          cep: isPickup ? '01310-100' : cep.trim(),
+          cep: isPickup ? '35720-000' : cep.trim(),
           street: isPickup ? 'Retirada na Confeitaria (Balcão)' : street.trim(),
           number: isPickup ? 'S/N' : number.trim(),
           complement: complement.trim() || undefined,
           neighborhood: isPickup ? 'Centro' : neighborhood.trim(),
-          city: isPickup ? 'São Paulo' : city.trim(),
-          state: isPickup ? 'SP' : state.trim(),
+          city: isPickup ? 'Matozinhos' : city.trim(),
+          state: isPickup ? 'MG' : state.trim(),
           reference: reference.trim() || undefined,
           isPickup
         },
@@ -1152,7 +1152,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   R$ {total.toFixed(2).replace('.', ',')}
                 </span>
                 <span className="text-stone-500 text-xs">
-                  Sweet Bliss Cupcakes Gourmet • São Paulo - SP
+                  Sweet Bliss Cupcakes Gourmet • Matozinhos - MG
                 </span>
               </div>
 

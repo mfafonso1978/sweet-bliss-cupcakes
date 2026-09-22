@@ -327,11 +327,11 @@ export default function App() {
                 </li>
                 <li className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-rose-400 flex-shrink-0" />
-                  <span>São Paulo - SP e Região</span>
+                  <span>Matozinhos - MG e Região</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-rose-400 flex-shrink-0" />
-                  <span>(11) 98765-4321 • Atendimento WhatsApp</span>
+                  <span>(31) 98765-4321 • Atendimento WhatsApp</span>
                 </li>
               </ul>
             </div>

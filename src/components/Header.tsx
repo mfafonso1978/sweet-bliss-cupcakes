@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span>•</span>
             <span className="flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 text-stone-400" />
-              São Paulo e Região
+              Matozinhos e Região
             </span>
             {onOpenAdminAuth && (
               <>
