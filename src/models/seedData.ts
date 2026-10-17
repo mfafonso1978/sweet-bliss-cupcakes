@@ -148,7 +148,8 @@ export const INITIAL_REGISTERED_USERS: RegisteredUser[] = [
         complement: 'Apto 42',
         neighborhood: 'Centro',
         city: 'Matozinhos',
-        state: 'MG'
+        state: 'MG',
+        reference: 'Próximo à Praça Bom Jesus'
       }
     ]
   },

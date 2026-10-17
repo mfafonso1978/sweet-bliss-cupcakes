@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CartItem, Order, PaymentMethod, User, Coupon } from '../models/types';
+import { CartItem, Order, PaymentMethod, User, Coupon, BRAZILIAN_STATES } from '../models/types';
 import { OrderController } from '../controllers/OrderController';
 import { CartController } from '../controllers/CartController';
 import { OrderValidator } from '../models/validators';
@@ -35,12 +35,6 @@ interface CheckoutModalProps {
   onOrderCreated: (order: Order) => void;
 }
 
-const BRAZILIAN_STATES = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
-  'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
-  'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-];
-
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isOpen,
   onClose,
@@ -51,20 +45,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   // Checkout Steps: 'address' -> 'payment' -> 'pix_screen' -> 'success'
   const [step, setStep] = useState<'address' | 'payment' | 'pix_screen' | 'success'>('address');
 
+  const userAddr = currentUser?.addresses?.[0];
+
   // Customer identification fields (Filled by the user)
   const [customerName, setCustomerName] = useState(currentUser?.name || '');
   const [customerPhone, setCustomerPhone] = useState(currentUser?.phone || '');
   const [customerEmail, setCustomerEmail] = useState(currentUser?.email || '');
 
-  // Address fields (Filled by the user)
-  const [cep, setCep] = useState('');
-  const [street, setStreet] = useState('');
-  const [number, setNumber] = useState('');
-  const [complement, setComplement] = useState('');
-  const [neighborhood, setNeighborhood] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('SP');
-  const [reference, setReference] = useState('');
+  // Address fields (Pre-filled from currentUser address if available)
+  const [cep, setCep] = useState(userAddr?.cep || '');
+  const [street, setStreet] = useState(userAddr?.street || '');
+  const [number, setNumber] = useState(userAddr?.number || '');
+  const [complement, setComplement] = useState(userAddr?.complement || '');
+  const [neighborhood, setNeighborhood] = useState(userAddr?.neighborhood || '');
+  const [city, setCity] = useState(userAddr?.city || '');
+  const [state, setState] = useState(userAddr?.state || 'MG');
+  const [reference, setReference] = useState(userAddr?.reference || '');
   const [isPickup, setIsPickup] = useState(false);
   const [isSearchingCep, setIsSearchingCep] = useState(false);
   const [cepStatusMessage, setCepStatusMessage] = useState<string | null>(null);
@@ -100,14 +96,47 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [processingMessage, setProcessingMessage] = useState('');
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
 
-  // Auto-sync if currentUser logs in
+  // Auto-sync se currentUser logar ou for atualizado
   useEffect(() => {
     if (currentUser) {
       if (!customerName) setCustomerName(currentUser.name);
       if (!customerEmail) setCustomerEmail(currentUser.email);
       if (!customerPhone && currentUser.phone) setCustomerPhone(currentUser.phone);
+
+      const addr = currentUser.addresses?.[0];
+      if (addr) {
+        if (!cep && addr.cep) setCep(addr.cep);
+        if (!street && addr.street) setStreet(addr.street);
+        if (!number && addr.number) setNumber(addr.number);
+        if (!complement && addr.complement) setComplement(addr.complement);
+        if (!neighborhood && addr.neighborhood) setNeighborhood(addr.neighborhood);
+        if (!city && addr.city) setCity(addr.city);
+        if (addr.state) setState(addr.state);
+        if (!reference && addr.reference) setReference(addr.reference);
+      }
     }
   }, [currentUser]);
+
+  // Ao abrir o modal com usuário logado, garante carregamento do endereço da conta
+  useEffect(() => {
+    if (isOpen && currentUser) {
+      if (currentUser.name) setCustomerName(currentUser.name);
+      if (currentUser.email) setCustomerEmail(currentUser.email);
+      if (currentUser.phone) setCustomerPhone(currentUser.phone);
+
+      const addr = currentUser.addresses?.[0];
+      if (addr) {
+        if (addr.cep) setCep(addr.cep);
+        if (addr.street) setStreet(addr.street);
+        if (addr.number) setNumber(addr.number);
+        if (addr.complement !== undefined) setComplement(addr.complement);
+        if (addr.neighborhood) setNeighborhood(addr.neighborhood);
+        if (addr.city) setCity(addr.city);
+        if (addr.state) setState(addr.state);
+        if (addr.reference !== undefined) setReference(addr.reference);
+      }
+    }
+  }, [isOpen, currentUser]);
 
   // Subtotal & Calculations delegadas ao CartController (MVC)
   const {

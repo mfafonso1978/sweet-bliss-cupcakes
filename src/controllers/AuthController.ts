@@ -28,7 +28,22 @@ export class AuthController {
   public static getCurrentUser(): User | null {
     try {
       const saved = localStorage.getItem(CURRENT_USER_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const user: User = JSON.parse(saved);
+        if (
+          user.email.toLowerCase() === 'cliente@sweetbliss.com' &&
+          (!user.addresses || user.addresses.length === 0 || !user.addresses[0]?.street)
+        ) {
+          const seedMaria = INITIAL_REGISTERED_USERS.find(
+            (u) => u.email.toLowerCase() === 'cliente@sweetbliss.com'
+          );
+          if (seedMaria?.addresses) {
+            user.addresses = seedMaria.addresses;
+            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+          }
+        }
+        return user;
+      }
     } catch (e) {
       console.error('Erro ao ler usuário atual:', e);
     }
@@ -59,6 +74,23 @@ export class AuthController {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          const mariaIdx = parsed.findIndex(
+            (u) => u.email.toLowerCase() === 'cliente@sweetbliss.com'
+          );
+          if (
+            mariaIdx >= 0 &&
+            (!parsed[mariaIdx].addresses ||
+              parsed[mariaIdx].addresses.length === 0 ||
+              !parsed[mariaIdx].addresses[0]?.street)
+          ) {
+            const seedMaria = INITIAL_REGISTERED_USERS.find(
+              (u) => u.email.toLowerCase() === 'cliente@sweetbliss.com'
+            );
+            if (seedMaria?.addresses) {
+              parsed[mariaIdx].addresses = seedMaria.addresses;
+              localStorage.setItem(REGISTERED_USERS_KEY, JSON.stringify(parsed));
+            }
+          }
           return parsed;
         }
       }
@@ -155,8 +187,12 @@ export class AuthController {
       name: existing.name,
       email: existing.email,
       phone: existing.phone,
-      birthDate: existing.birthDate,
-      addresses: existing.addresses || []
+      addresses:
+        existing.addresses && existing.addresses.length > 0 && existing.addresses[0]?.street
+          ? existing.addresses
+          : existing.email.toLowerCase() === 'cliente@sweetbliss.com'
+          ? INITIAL_REGISTERED_USERS[0].addresses
+          : []
     };
 
     this.setCurrentUser(safeUser);
