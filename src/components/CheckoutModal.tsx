@@ -812,7 +812,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 onClick={handleProceedToPayment}
                 className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-2xl shadow-md shadow-rose-600/20 text-xs flex items-center justify-center gap-2 transition-all hover:scale-101"
               >
-                <span>Avançar para Pagamento (PIX, Cartão ou Dinheiro)</span>
+                <span>Continuar para Pagamento</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
