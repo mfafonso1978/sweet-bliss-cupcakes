@@ -185,8 +185,22 @@ export default function App() {
     // 3. Atualiza estado reativo de pedidos a partir da persistência
     setOrders(OrderController.getOrders());
 
-    // 4. Abre imediatamente a modal de rastreamento
+    // 4. Fecha imediatamente as modais de checkout e carrinho para garantir que nenhuma janela anterior fique aberta
+    setIsCheckoutOpen(false);
+    setIsCartOpen(false);
+
+    // 5. Abre imediatamente a modal de rastreamento
     setActiveOrderForStatus(newOrder);
+  };
+
+  // Garante que, ao fechar o rastreamento, nenhuma outra janela fique aberta (checkout, carrinho, histórico, etc.)
+  const handleCloseOrderStatus = () => {
+    setActiveOrderForStatus(null);
+    setIsCheckoutOpen(false);
+    setIsCartOpen(false);
+    setIsOrdersOpen(false);
+    setIsProfileOpen(false);
+    setSelectedCupcake(null);
   };
 
   const handleUpdateOrderStatus = (orderId: string, nextStatus: OrderStatus) => {
@@ -452,7 +466,7 @@ export default function App() {
       {activeOrderForStatus && (
         <OrderStatusModal
           order={activeOrderForStatus}
-          onClose={() => setActiveOrderForStatus(null)}
+          onClose={handleCloseOrderStatus}
           onUpdateStatus={handleUpdateOrderStatus}
           onSaveRating={handleSaveRating}
           onNewOrder={handleQuickOrder}

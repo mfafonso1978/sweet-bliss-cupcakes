@@ -138,6 +138,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     }
   }, [isOpen, currentUser]);
 
+  // Redefine as etapas e limpa estados de processamento sempre que o modal for fechado
+  useEffect(() => {
+    if (!isOpen) {
+      setStep('address');
+      setCreatedOrder(null);
+      setIsProcessing(false);
+      setValidationError(null);
+    }
+  }, [isOpen]);
+
   // Subtotal & Calculations delegadas ao CartController (MVC)
   const {
     subtotal,

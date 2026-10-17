@@ -142,7 +142,10 @@ export const OrderStatusModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in overflow-y-auto">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in overflow-y-auto"
+      onClick={onClose}
+    >
       <div 
         className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-stone-200 flex flex-col my-4 max-h-[92vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -164,7 +167,8 @@ export const OrderStatusModal: React.FC<Props> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+            title="Fechar acompanhamento"
           >
             <X className="w-4 h-4" />
           </button>
@@ -487,8 +491,8 @@ export const OrderStatusModal: React.FC<Props> = ({
                 {savedRatingFeedback ? 'Avaliação Registrada! Muito obrigado ❤️' : 'Enviar Avaliação'}
               </button>
 
-              {onNewOrder && (
-                <div className="pt-2 border-t border-amber-200/60">
+              <div className="pt-2 flex flex-col gap-2 border-t border-amber-200/60">
+                {onNewOrder && (
                   <button
                     onClick={() => {
                       onClose();
@@ -499,8 +503,17 @@ export const OrderStatusModal: React.FC<Props> = ({
                     <ShoppingBag className="w-4 h-4" />
                     <span>Fazer Novo Pedido</span>
                   </button>
-                </div>
-              )}
+                )}
+
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Concluir e Fechar</span>
+                </button>
+              </div>
             </div>
           ) : (
             <div className="text-center text-stone-500 text-[11px] p-2 bg-stone-50 rounded-xl border border-stone-200">
@@ -508,6 +521,23 @@ export const OrderStatusModal: React.FC<Props> = ({
             </div>
           )}
 
+        </div>
+
+        {/* Modal Footer */}
+        <div className="p-3 sm:p-4 bg-stone-50 border-t border-stone-200 flex items-center justify-between">
+          <span className="text-[11px] text-stone-500 font-medium">
+            {order.status === 'Entregue' 
+              ? '✅ Pedido concluído e entregue' 
+              : 'Linha do tempo atualizada automaticamente'}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+          >
+            <X className="w-3.5 h-3.5" />
+            <span>Fechar</span>
+          </button>
         </div>
       </div>
     </div>
