@@ -10,7 +10,8 @@ import {
   ArrowRight, 
   ShieldCheck,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Package
 } from 'lucide-react';
 
 interface CartDrawerProps {
@@ -183,13 +184,24 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     {/* Info */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <h5 className="text-xs font-bold text-stone-900 truncate">
                             {item.cupcake.name}
                           </h5>
-                          <span className="text-[11px] text-stone-500">
-                            R$ {itemPrice.toFixed(2).replace('.', ',')} un.
-                          </span>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            <span className="text-[11px] text-stone-500 font-medium">
+                              R$ {itemPrice.toFixed(2).replace('.', ',')} un.
+                            </span>
+                            <span className="text-stone-300 text-xs">•</span>
+                            <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium border ${
+                              item.cupcake.stock <= 3
+                                ? 'bg-amber-50 text-amber-800 border-amber-200/60'
+                                : 'bg-white text-stone-600 border-stone-200/80 shadow-2xs'
+                            }`}>
+                              <Package className="w-2.5 h-2.5 text-stone-400 flex-shrink-0" />
+                              <span>Estoque: <strong className="font-semibold text-stone-800">{item.cupcake.stock} un.</strong></span>
+                            </span>
+                          </div>
                         </div>
 
                         {/* Trash button */}

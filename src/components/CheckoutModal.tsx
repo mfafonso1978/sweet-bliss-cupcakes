@@ -501,9 +501,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           />
                           <div>
                             <span className="font-bold text-stone-900 block">{item.cupcake.name}</span>
-                            <span className="text-stone-500 text-[11px]">
-                              {item.quantity}x de R$ {price.toFixed(2).replace('.', ',')}
-                            </span>
+                            <div className="flex items-center gap-1.5 text-[11px] text-stone-500">
+                              <span>{item.quantity}x de R$ {price.toFixed(2).replace('.', ',')}</span>
+                              <span className="text-stone-300">•</span>
+                              <span className="text-[10px] text-stone-500 font-medium">Estoque: {item.cupcake.stock} un.</span>
+                            </div>
                           </div>
                         </div>
                         <span className="font-mono font-bold text-stone-900">
