@@ -10,7 +10,8 @@ import {
   Wheat, 
   Milk, 
   Egg, 
-  Nut
+  Nut,
+  Package
 } from 'lucide-react';
 
 interface CupcakeCardProps {
@@ -138,6 +139,22 @@ export const CupcakeCard: React.FC<CupcakeCardProps> = ({
                   R$ {cupcake.price.toFixed(2).replace('.', ',')}
                 </span>
               )}
+            </div>
+
+            {/* Estoque atual - discreto e visível */}
+            <div className="mt-1">
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
+                isOutOfStock
+                  ? 'bg-rose-50 text-rose-700 border-rose-200/60'
+                  : cupcake.stock <= 3
+                  ? 'bg-amber-50 text-amber-800 border-amber-200/60'
+                  : 'bg-stone-50 text-stone-600 border-stone-200/70'
+              }`}>
+                <Package className="w-2.5 h-2.5 text-stone-400 flex-shrink-0" />
+                <span>
+                  Estoque: <strong className="font-semibold text-stone-800">{isOutOfStock ? 'Esgotado' : `${cupcake.stock} un.`}</strong>
+                </span>
+              </span>
             </div>
           </div>
 
