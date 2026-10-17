@@ -218,7 +218,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     : 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20 active:scale-98'
                 }`}
               >
-                <span>Avançar para Checkout</span>
+                <span>Finalizar Pedido</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
