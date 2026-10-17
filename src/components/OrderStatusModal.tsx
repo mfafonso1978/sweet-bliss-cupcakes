@@ -38,6 +38,21 @@ export const OrderStatusModal: React.FC<Props> = ({
   const [feedback, setFeedback] = useState<string>(order?.ratingFeedback || '');
   const [savedRatingFeedback, setSavedRatingFeedback] = useState(false);
   const [isLiveTrackingActive, setIsLiveTrackingActive] = useState(true);
+  const [isDeliveredGreen, setIsDeliveredGreen] = useState(false);
+
+  // Efeito para a última etapa ("Entregue"):
+  // Fica em vermelho por 3.5 segundos e logo em seguida transiciona para a cor verde como os outros
+  useEffect(() => {
+    if (order?.status === 'Entregue') {
+      setIsDeliveredGreen(false);
+      const timer = setTimeout(() => {
+        setIsDeliveredGreen(true);
+      }, 3500);
+      return () => clearTimeout(timer);
+    } else {
+      setIsDeliveredGreen(false);
+    }
+  }, [order?.status, order?.id]);
 
   // Sync rating and feedback when a new order is opened
   useEffect(() => {
@@ -159,9 +174,15 @@ export const OrderStatusModal: React.FC<Props> = ({
         <div className="p-5 overflow-y-auto space-y-5 flex-1 text-xs text-stone-700">
 
           {/* Current Status Highlight Card */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-50 via-pink-50 to-amber-50 border border-rose-200 flex items-center justify-between gap-3">
+          <div className={`p-4 rounded-2xl border flex items-center justify-between gap-3 transition-all duration-700 ${
+            order.status === 'Entregue' && isDeliveredGreen
+              ? 'bg-gradient-to-r from-emerald-50 via-teal-50 to-green-50 border-emerald-200'
+              : 'bg-gradient-to-r from-rose-50 via-pink-50 to-amber-50 border-rose-200'
+          }`}>
             <div>
-              <span className="text-[10px] uppercase font-bold text-rose-700 tracking-wider block">
+              <span className={`text-[10px] uppercase font-bold tracking-wider block transition-colors duration-500 ${
+                order.status === 'Entregue' && isDeliveredGreen ? 'text-emerald-700' : 'text-rose-700'
+              }`}>
                 Status Atual: {statuses[currentIdx]?.label}
               </span>
               <h4 className="text-base font-bold text-stone-900 mt-0.5">
@@ -172,7 +193,11 @@ export const OrderStatusModal: React.FC<Props> = ({
               </p>
             </div>
 
-            <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-rose-600/20">
+            <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center flex-shrink-0 shadow-md transition-all duration-700 ${
+              order.status === 'Entregue' && isDeliveredGreen
+                ? 'bg-emerald-600 shadow-emerald-600/20'
+                : 'bg-rose-600 shadow-rose-600/20'
+            }`}>
               {React.createElement(statuses[currentIdx]?.icon || Clock, { className: 'w-6 h-6' })}
             </div>
           </div>
@@ -187,7 +212,9 @@ export const OrderStatusModal: React.FC<Props> = ({
               {/* Horizontal progress bar */}
               <div className="absolute top-6 left-6 right-6 h-1 bg-stone-200 -z-0">
                 <div 
-                  className="h-full bg-rose-600 transition-all duration-500 rounded-full"
+                  className={`h-full transition-all duration-700 rounded-full ${
+                    order.status === 'Entregue' && isDeliveredGreen ? 'bg-emerald-600' : 'bg-rose-600'
+                  }`}
                   style={{ width: `${(currentIdx / (statuses.length - 1)) * 100}%` }}
                 />
               </div>
@@ -197,24 +224,35 @@ export const OrderStatusModal: React.FC<Props> = ({
                 {statuses.map((s, idx) => {
                   const isDone = idx <= currentIdx;
                   const isCurrent = idx === currentIdx;
+                  const isLastStep = idx === statuses.length - 1;
                   const Icon = s.icon;
+
+                  // Se for a última etapa ("Entregue") e já tiver transicionado para verde, fica verde como os outros
+                  const nodeBg = isCurrent
+                    ? isLastStep && isDeliveredGreen
+                      ? 'bg-emerald-600 text-white ring-4 ring-emerald-200 shadow-md scale-110'
+                      : 'bg-rose-600 text-white ring-4 ring-rose-200 shadow-md scale-110'
+                    : isDone
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-stone-200 text-stone-400';
+
+                  const labelColor = isCurrent
+                    ? isLastStep && isDeliveredGreen
+                      ? 'text-emerald-700'
+                      : 'text-rose-700'
+                    : isDone
+                    ? 'text-stone-900'
+                    : 'text-stone-400';
+
                   return (
                     <div
                       key={s.id}
                       className="flex flex-col items-center"
                     >
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-                        isCurrent
-                          ? 'bg-rose-600 text-white ring-4 ring-rose-200 shadow-md scale-110'
-                          : isDone
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-stone-200 text-stone-400'
-                      }`}>
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-700 ${nodeBg}`}>
                         <Icon className="w-4 h-4" />
                       </div>
-                      <span className={`text-[10px] font-bold mt-2 leading-tight ${
-                        isCurrent ? 'text-rose-700' : isDone ? 'text-stone-900' : 'text-stone-400'
-                      }`}>
+                      <span className={`text-[10px] font-bold mt-2 leading-tight transition-colors duration-700 ${labelColor}`}>
                         {s.label}
                       </span>
                     </div>
@@ -236,7 +274,7 @@ export const OrderStatusModal: React.FC<Props> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className={`grid gap-2 ${currentIdx < statuses.length - 1 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
               {currentIdx < statuses.length - 1 && (
                 <button
                   onClick={handleAdvanceStep}
@@ -248,15 +286,31 @@ export const OrderStatusModal: React.FC<Props> = ({
               )}
 
               <button
-                onClick={() => setIsLiveTrackingActive(!isLiveTrackingActive)}
+                type="button"
+                onClick={() => {
+                  if (order.status !== 'Entregue') {
+                    setIsLiveTrackingActive(!isLiveTrackingActive);
+                  }
+                }}
                 className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 border transition-all ${
-                  isLiveTrackingActive
+                  order.status === 'Entregue'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-2xs'
+                    : isLiveTrackingActive
                     ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
                     : 'bg-white hover:bg-stone-100 text-stone-700 border-stone-200'
                 }`}
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isLiveTrackingActive ? 'animate-spin' : ''}`} />
-                <span>{isLiveTrackingActive ? 'Rastreamento Ativo' : 'Rastreamento Pausado'}</span>
+                {order.status === 'Entregue' ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Pedido Entregue no Endereço</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLiveTrackingActive ? 'animate-spin' : ''}`} />
+                    <span>{isLiveTrackingActive ? 'Rastreamento Ativo' : 'Rastreamento Pausado'}</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
