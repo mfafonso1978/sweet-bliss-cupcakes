@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CartItem } from '../models/types';
 import { CartController } from '../controllers/CartController';
 import { 
@@ -9,7 +9,8 @@ import {
   ShoppingBag, 
   ArrowRight, 
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 
 interface CartDrawerProps {
@@ -31,6 +32,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onClearCart,
   onProceedToCheckout
 }) => {
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearedSuccess, setClearedSuccess] = useState(false);
+
   if (!isOpen) return null;
 
   // Cálculos delegados ao CartController (MVC)
@@ -42,11 +46,56 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-stone-900/50 backdrop-blur-xs transition-opacity animate-in fade-in"
-        onClick={onClose}
+        onClick={() => {
+          setShowClearConfirm(false);
+          onClose();
+        }}
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white shadow-2xl border-l border-stone-200 flex flex-col animate-in slide-in-from-right duration-300">
+        <div className="relative w-screen max-w-md bg-white shadow-2xl border-l border-stone-200 flex flex-col animate-in slide-in-from-right duration-300">
+          
+          {/* Confirmação para Esvaziar Carrinho */}
+          {showClearConfirm && (
+            <div className="absolute inset-0 z-30 bg-stone-900/60 backdrop-blur-xs flex items-center justify-center p-6 animate-in fade-in duration-200">
+              <div className="bg-white rounded-3xl p-6 shadow-2xl border border-stone-100 max-w-xs w-full text-center space-y-4 animate-in zoom-in-95 duration-200">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 shadow-inner">
+                  <Trash2 className="w-7 h-7" />
+                </div>
+                
+                <div className="space-y-1.5">
+                  <h4 className="text-base font-bold text-stone-900">
+                    Limpar o carrinho?
+                  </h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Tem certeza de que deseja remover todos os itens? Essa ação não pode ser desfeita.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowClearConfirm(false)}
+                    className="flex-1 py-2.5 px-3 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-50 text-xs font-semibold transition-all active:scale-98"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClearCart();
+                      setShowClearConfirm(false);
+                      setClearedSuccess(true);
+                      setTimeout(() => setClearedSuccess(false), 4000);
+                    }}
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-md shadow-rose-600/20 active:scale-98"
+                  >
+                    Sim, Limpar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Drawer Header */}
           <div className="p-5 border-b border-stone-200 flex items-center justify-between bg-stone-50">
@@ -67,8 +116,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <div className="flex items-center gap-2">
               {items.length > 0 && (
                 <button
-                  onClick={onClearCart}
-                  className="text-[11px] text-stone-400 hover:text-red-600 transition-colors font-medium mr-1"
+                  onClick={() => setShowClearConfirm(true)}
+                  className="text-[11px] text-stone-400 hover:text-rose-600 transition-colors font-medium mr-1"
                   title="Esvaziar todo o carrinho"
                 >
                   Limpar
@@ -87,6 +136,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
             {items.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
+                {clearedSuccess && (
+                  <div className="w-full max-w-xs p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center justify-center gap-2 animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Todos os itens foram removidos com sucesso!</span>
+                  </div>
+                )}
                 <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-400 flex items-center justify-center text-3xl">
                   🧁
                 </div>
